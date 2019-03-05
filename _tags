@@ -13,3 +13,4 @@
 <src/ParseUtil.cmx>:for-pack(Arbolib)
 <src/Ast.cmx>:for-pack(Arbolib)
 <lib>:-traverse
+true: package(zarith)

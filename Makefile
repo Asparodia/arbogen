@@ -1,17 +1,18 @@
+OCB = ocamlbuild -use-ocamlfind
 
 all: arbogen lib
 
 arbogen:
-	ocamlbuild src/Arbogen.native
-	ocamlbuild src/Arbogen.byte
+	$(OCB) src/Arbogen.native
+	$(OCB) src/Arbogen.byte
 	@mkdir -p bin
 	@mv Arbogen.native bin/arbogen.native
 	@mv Arbogen.byte bin/arbogen.byte
 
 lib:
-	ocamlbuild src/Arbolib.cmxa
-	ocamlbuild src/Arbolib.cma
-	ocamlbuild src/Arbolib.cmi
+	$(OCB) src/Arbolib.cmxa
+	$(OCB) src/Arbolib.cma
+	$(OCB) src/Arbolib.cmi
 	@mkdir -p lib
 	@cp _build/src/Arbolib.cma lib
 	@cp _build/src/Arbolib.cmxa lib
@@ -31,4 +32,3 @@ uninstall-lib:
 
 clean:
 	rm -rf _build bin lib
-

@@ -1,11 +1,32 @@
 open Util
 
+let randbits bit_gen nbits =
+  let rec gen acc nbits =
+    let bits = bit_gen () in
+    if nbits <= 30 then
+      let bits = bits land ((1 lsl nbits) - 1) in
+      Z.logor (Z.of_int bits) (Z.shift_left acc nbits)
+    else
+      gen (Z.logor (Z.of_int bits) (Z.shift_left acc 30)) (nbits - 30)
+  in
+  gen Z.zero nbits
+
+let rand_bigint bit_gen bound =
+  if Z.leq bound Z.zero then raise (Invalid_argument "random_bigint");
+  let nbits = 1 + Z.log2 bound in
+  let rec gen () =
+    let r = randbits bit_gen nbits in
+    if r >= bound then gen () else r
+  in
+  gen ()
+
 module type Sig =
 sig
   val name : string
   val init : int -> unit
   val self_init : unit -> unit
   val int : int -> int
+  val bigint : Z.t -> Z.t
   val float : float -> float
   val get_state : unit -> Random.State.t
   val set_state : Random.State.t -> unit
@@ -17,6 +38,7 @@ struct
   let init = Random.init
   let self_init = Random.self_init
   let int = Random.int
+  let bigint = rand_bigint Random.bits
   let float = Random.float
   let get_state = Random.get_state
   let set_state = Random.set_state
@@ -40,18 +62,22 @@ struct
     state := r;
     r mod n
 
-  let float f = 
+  let bigint =
+    let bits () = int (1 lsl 30) in
+    rand_bigint bits
+
+  let float f =
     let n = (int max_mod) in
     state := n;
     f *. ((float_of_int n) /. max_mod_f)
 
   let get_state () = Obj.magic { st = Array.make 55 0; idx = !state }
 
-  let set_state s = 
+  let set_state s =
     let { st = _ ; idx = n} = Obj.magic s in
     state := n
 end
-  
+
 module RandNull : Sig =
 struct
   let name = "randnull"
@@ -157,14 +183,16 @@ struct
     state := (!state + 1) mod max_mod;
     l.(i)
 
-  let float f = 
+  let bigint _ = failwith "don't use me please"
+
+  let float f =
     let n = (int max_mod) in
     let r = f *. ((float_of_int n) /. max_mod_f) in
     r
 
   let get_state () = Obj.magic { st = Array.make 55 0; idx = !state }
 
-  let set_state s = 
+  let set_state s =
     let { st = _ ; idx = n} = Obj.magic s in
     state := n
 end
@@ -176,3 +204,5 @@ let _ = StringHashtbl.add randgen_tbl "ocaml" (module OcamlRandom : Sig)
 let _ = StringHashtbl.add randgen_tbl "randu" (module Randu : Sig)
 
 let _ = StringHashtbl.add randgen_tbl "randnull" (module RandNull : Sig)
+
+let randz = RandZ.randz
