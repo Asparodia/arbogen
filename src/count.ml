@@ -17,83 +17,32 @@ let number_of_nodes (comp:component) =
 		| Call(_) -> 0
 		| Cons(n, l) -> n
 		
-let equals a b = let res = ref true in 
-	if Array.length a != Array.length b 
-		then res := false
-	else 
-		begin
-			let index = ref 0 in
-			while !index < (Array.length a) do
-				if a.(!index) != b.(!index) 
-					then res := false
-					else
-						index := !index + 1
-			done;
-		end;
-	!res
-		
-let combinatorics_numbers (comp:component) n = 
-	let nb_recursions = number_of_recursions(comp) in 
-		if (n < 0) || (nb_recursions == 0) then [[||]]
-		else 
-			begin
-				let base = Array.make nb_recursions 0 in 
-				let result = ref [[||]] in
-				base.(0) <- n;
-				while ( not(equals (List.nth !result 0) base)) do
-					result := [base] @ !result;
-					for i=0 to (Array.length base -2) do
-						if (base.(i) -1) >= (base.(i+1) +1) then
-							begin
-								base.(i) <- base.(i) -1;
-								base.(i+1) <- base.(i+1)+1
-							end
-					done
-				done;
-				!result
-			end
 			
 let rec factorial n = 
 	if n <= 1 then 1 
 	else n * (factorial (n-1))
 	
-let combination base = 
-	if Array.length base == 0 
-		then 0
-	else 
-		begin
-			let duplicate_numbers = ref []
-			and count = ref 0 in
-			for i=0 to (Array.length base -2) do
-				if base.(i) == base.(i + 1) then count := !count +1
-				else if !count > 0 then 
-					begin
-						duplicate_numbers := !duplicate_numbers @ [(!count+1)];
-						count := 0
-					end
-			done;
-			if !count > 0 then duplicate_numbers := !duplicate_numbers @ [(!count+1)];
-			let result = ref (factorial(Array.length base)) in
-			for i = 0 to (List.length !duplicate_numbers -1) do
-				result := !result / (factorial (List.nth !duplicate_numbers i))
-			done;
-			!result
-		end
+let next_partition_with_factor base = 
+	let modification = ref false and
+	duplicate = ref 1 and
+	den = ref 1 in 
+		for i=0 to (Array.length base -2) do
+			if (not (!modification)) && base.(i)-1 >= base.(i+1) +1 then
+				begin
+					base.(i) <- base.(i)-1;
+					base.(i+1) <- base.(i+1)+1;
+					modification := true
+				end;
+			if base.(i) == base.(i+1) then 
+				begin
+					incr duplicate;
+					den := !den * !duplicate
+				end
+			else
+				duplicate := 1
+		done;
+	!modification, factorial (Array.length base) /(!den), base
 			
-let add_in_backup back_up nb e = 
-	let backup = ref back_up in 
-	if Array.length !backup != nb 
-		then !backup.(nb) <- e
-	else
-		begin
-			let backup_increased = Array.make (2*nb) 0 in
-			for i=0 to (nb-1) do
-				backup_increased.(i) <- !backup.(i);
-				backup := backup_increased
-			done;
-		end;
-	!backup
-
 let read_file filename = 
 	let lines = ref [] in
 	let chan = open_in filename in
@@ -104,33 +53,6 @@ let read_file filename =
 		with End_of_file ->
   	close_in chan;
 		!lines
-
-let rec calcul_base_aux (comp:component) backup n base = 
-	match base with 
-		| [] -> 0
-		| hd::t -> 
-			if number_of_recursions comp == 0 && 
-			number_of_nodes comp == n then
-				(calcul_base_aux comp backup n t) + 1
-			else if number_of_nodes comp <= n then 
-				begin
-					let tmp = ref 1 in
-						for i=0 to (Array.length hd -1) do
-							tmp := !tmp * backup.(i)
-						done;
-					(calcul_base_aux comp backup n t) + (combination hd) * !tmp;
-				end
-			else
-				(calcul_base_aux comp backup n t)
-
-let calcul_base (comp:component) backup nb_elements n = 
-	let base = combinatorics_numbers comp (nb_elements - (number_of_nodes comp))
-	in calcul_base_aux comp backup n base	
-	
-let rec calcul_comp (l:component list) backup nb_elements n =
-	match l with 
-		| [] -> 0
-		| hd::t -> ((calcul_base hd backup nb_elements n) + (calcul_comp t backup nb_elements n))
 	
 let rec set_backup lines backup i = 
 	match lines with
@@ -141,77 +63,55 @@ let get_comps_from_rule (r:rule) =
 	match r with
 		| s, l -> l 
 
+let rec calcul_comp (l:component list) backup n bn = match l with	
+	| [] -> !bn
+	| hd::t -> 
+		if n - number_of_nodes hd >= 0 then
+			if number_of_recursions hd == 0 && number_of_nodes hd == n then incr bn
+			else 
+				begin
+					let base = ref (Array.make (max 1 (number_of_recursions hd)) 0) in
+					let modification = ref true in
+					!base.(0) <- (n - number_of_nodes hd);
+					let factor = ref 1 in 
+					if number_of_nodes hd != n then factor := number_of_recursions hd;
+					while !modification do
+						let product = ref 1 in
+						for i=0 to (Array.length !base -1) do
+							product := !product * backup.(!base.(i))
+						done;
+						bn := !bn + !product * !factor;
+						let a, b, c = next_partition_with_factor !base in
+						modification := a;
+						factor := b;
+						base := c 
+					done
+				end;
+		calcul_comp t backup n bn
+	 
 let count n (r:rule) = 
 	let lines = read_file "backup.cnt" in 
 	let nb_elements = ref (List.length lines) in
-	let backup = ref (Array.make (max !nb_elements 1000) 0) in
+	let backup = ref (Array.make (max (!nb_elements *2) 1000) 0) in
 		begin
-			backup := set_backup lines !backup 0;
-			let bn = ref 0 in  
+			backup := set_backup lines !backup 0; 
 			for i=(!nb_elements) to n do
-				bn := !bn + (calcul_comp (get_comps_from_rule r) !backup i n);
+				let bn = calcul_comp (get_comps_from_rule r) !backup i (ref 0) in
 				if Array.length !backup == !nb_elements then
 					begin
 						let backup_increased = Array.make (!nb_elements * 2) 0 in
-						for i=0 to (!nb_elements-1) do
-							backup_increased.(i) <- !backup.(i)
+						for j=0 to (!nb_elements-1) do
+							backup_increased.(j) <- !backup.(j)
 						done;
 						backup := backup_increased
 					end;
-				!backup.(!nb_elements) <- !bn;
-				nb_elements := !nb_elements +1
+				!backup.(!nb_elements) <- bn;
+				incr nb_elements
 			done;
 			!backup
 		end
-					
-	
 		
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-						
+					
+let r = "B", Cons(0, [])::Cons(1, [])::Cons(1, (Elem "B")::[])::Cons(1,(Elem "B")::(Elem "B")::[])::[];; 
+count 10 r;;
