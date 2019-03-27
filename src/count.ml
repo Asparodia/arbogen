@@ -1,3 +1,5 @@
+open Printf
+
 type elem = Seq of string | Elem of string 
 type reference = string
 
@@ -17,7 +19,6 @@ let number_of_nodes (comp:component) =
 		| Call(_) -> 0
 		| Cons(n, l) -> n
 		
-			
 let rec factorial n = 
 	if n <= 1 then 1 
 	else n * (factorial (n-1))
@@ -91,6 +92,7 @@ let rec calcul_comp (l:component list) backup n bn = match l with
 	 
 let count n (r:rule) = 
 	let lines = read_file "backup.cnt" in 
+	let fileWriter = open_out_gen [Open_append] 744 "backup.cnt" in 
 	let nb_elements = ref (List.length lines) in
 	let backup = ref (Array.make (max (!nb_elements *2) 1000) 0) in
 		begin
@@ -106,12 +108,19 @@ let count n (r:rule) =
 						backup := backup_increased
 					end;
 				!backup.(!nb_elements) <- bn;
-				incr nb_elements
+				incr nb_elements;
+				fprintf fileWriter "%s\n" (string_of_int bn)
 			done;
+			close_out fileWriter;
 			!backup
 		end
 		
 
-					
+(*					
 let r = "B", Cons(0, [])::Cons(1, [])::Cons(1, (Elem "B")::[])::Cons(1,(Elem "B")::(Elem "B")::[])::[];; 
 count 10 r;;
+*)
+
+let b = "B", Cons(0, [])::Cons(1,(Elem "B")::(Elem "B")::[])::[];;
+count 1000 b;;
+
