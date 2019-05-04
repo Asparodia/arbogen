@@ -2,13 +2,13 @@ open Printf
 open Grammar
 
 let number_of_recursions (comp:component) = 
-	match comp with
-		| Call(_) -> 0
-		| Cons(n, l) -> List.length l
+  match comp with
+    | Call(_) -> 0
+    | Cons(n, l) -> List.length l
 
 let number_of_nodes (comp:component) = 
 	match comp with
-		| Call(_) -> 0
+	  | Call(_) -> 0
 		| Cons(n, l) -> n
 		
 let rec factorial n = 
@@ -27,7 +27,7 @@ let next_partition_with_factor base =
 				base.(!i) <- base.(!i) + 1;
 				modification := true
 			end;
-		incr i
+    incr i
 	done;
 	let duplicate = ref 1 and
 	factor = ref 1 in
@@ -37,7 +37,7 @@ let next_partition_with_factor base =
 				incr duplicate;
 				factor := !factor * !duplicate
 			end
-		else
+	  else
 			duplicate := 1
 	done;
 	!modification, factorial (Array.length base) / !factor, base

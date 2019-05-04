@@ -54,54 +54,54 @@ let combination m p =
 
 let rec aux (l:component list) (l_original:component list) backup size index = match l with
 	|[] -> []
-	|hd::t -> 
-						let s = ref ["("] in 
-						 if number_of_recursions hd == 0 && number_of_nodes hd == size then ["()"]
-						 else if (number_of_recursions hd) != 0 && (number_of_nodes hd) <= size then
-						 	begin
-						 	  let partition = ref (Array.make ((number_of_recursions hd) +1) 0) in
-						 	  !partition.(0) <- size - number_of_nodes hd;
-						 	  let isModified = ref true in
-						 	  let f = frequencies !partition in 
-						 	  let factor = ref 1 in 
-						 	  let rec produit paire = match paire with
-						 		  |[] -> 1
-						 		  |hd::t -> (factorial hd.(1)) * produit t
-						 	  in factor := (factorial (Array.length !partition)) / (produit f);
-								let fin_parenthese = ref false in 
-						 	  while !isModified do
-						 		  let product = ref 1 in
-						 		  for i=0 to (Array.length !partition -1) do
-						 			  product := !product * backup.(!partition.(i));
-						 		  done;
-						 		  if !factor * !product -1 >= !index then
-						 		    begin
-						 		      let c = combination (!index / !product) !partition in
-						 		      index := !index mod !product;
-						 		      for i=0 to (Array.length c -1) do
-						 		      	product := !product / backup.(c.(i));
-												s := !s @ (aux l_original l_original backup c.(i) (ref(!index / !product)));
-						 		      	index := !index mod !product
-						 		      done;
-											isModified := false;
-											fin_parenthese := true
-						 		    end
-						 		  else
-						 		  	begin
-						 		  		index := !index - !factor * !product;
-						 		  		let a,b,c = next_partition_with_factor !partition in
-						 		  		isModified := a;
-						 		  		factor := b;
-						 		  		partition := c;
-						 		  	end
-						 	  done;
-								if !fin_parenthese then 
-									!s @ [")"]
-								else
-						 	  	(aux t l_original backup size index)
-						 	end
-						else
-							(aux t l_original backup size index);;
+	|hd::t ->
+		let s = ref ["("] in 
+		if number_of_recursions hd == 0 && number_of_nodes hd == size then ["()"]
+		else if (number_of_recursions hd) != 0 && (number_of_nodes hd) <= size then
+			begin
+				let partition = ref (Array.make ((number_of_recursions hd) +1) 0) in
+				!partition.(0) <- size - number_of_nodes hd;
+				let isModified = ref true in
+				let f = frequencies !partition in 
+				let factor = ref 1 in
+				let rec produit paire = match paire with
+				  |[] -> 1
+					|hd::t -> (factorial hd.(1)) * produit t
+					in factor := (factorial (Array.length !partition)) / (produit f);
+				let fin_parenthese = ref false in
+				while !isModified do
+					let product = ref 1 in
+					for i=0 to (Array.length !partition -1) do
+						product := !product * backup.(!partition.(i));
+					done;
+					if !factor * !product -1 >= !index then
+						begin
+							let c = combination (!index / !product) !partition in
+							index := !index mod !product;
+							for i=0 to (Array.length c -1) do
+								product := !product / backup.(c.(i));
+								s := !s @ (aux l_original l_original backup c.(i) (ref(!index / !product)));
+								index := !index mod !product
+								done;
+							isModified := false;
+							fin_parenthese := true
+							end
+				  else
+						begin
+							index := !index - !factor * !product;
+						 	let a,b,c = next_partition_with_factor !partition in
+						 	isModified := a;
+						 	factor := b;
+						 	partition := c;
+						end
+				done;
+			  if !fin_parenthese then 
+				  !s @ [")"]
+			  else
+					(aux t l_original backup size index)
+			end
+		else
+			(aux t l_original backup size index);;
 
 
 
