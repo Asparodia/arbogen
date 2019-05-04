@@ -7,19 +7,19 @@ let number_of_recursions (comp:component) =
     | Cons(n, l) -> List.length l
 
 let number_of_nodes (comp:component) = 
-	match comp with
-	  | Call(_) -> 0
-		| Cons(n, l) -> n
+  match comp with
+    | Call(_) -> 0
+    | Cons(n, l) -> n
 		
 let rec factorial n = 
 	if n <= 1 then 1 
 	else n * (factorial (n-1))
 
 let next_partition_with_factor base = 
-	let modification = ref false and
-	index = ref 0 and
-	i = ref 1 in 
-	while !i < Array.length base && not !modification do
+  let modification = ref false and
+  index = ref 0 and
+  i = ref 1 in 
+  while !i < Array.length base && not !modification do
 		if base.(!index) - base.(!i) == 0 then index := !i
 		else if base.(!index) - base.(!i) >= 2 then
 			begin
