@@ -1,8 +1,4 @@
-(*open Count*)
-
-let rec factorial n = 
-	if n <= 1 then 1 
-	else n * (factorial (n-1))
+open Count
 
 let rec remove l indice = match l with
 | [] -> []
@@ -17,106 +13,98 @@ let frequencies p =
 			f := [|p.(i);1|] :: !f
 	done;
 	!f
-		
-		
+			
 exception Breakloop;;
 
 let combination m p = 
-	let n = ref (m+1) in
+	let n = ref (m +1) in 
 	let f = ref (frequencies p) in
 	let c = Array.copy p in
-	if (Array.length p) == 1 then p
+	if (Array.length p) == 1 then p 
 	else
 		begin
-			for i=0 to (Array.length c -1) do
-				let index = ref 0 in
-				try
-					while true do
-						let step = ref 1 in
-						for j=0 to (List.length !f -1) do
-							if j == !index then
-								begin
-								step := !step * (factorial ((List.nth !f j).(1) -1));
-								end
-							else
-								step := !step * (factorial (List.nth !f j).(1));
-						done;
-						step := (factorial (Array.length c - i -1)) / (!step);
-						if !n <= !step then raise Breakloop;
-						n := !n - !step;
-						incr index
-					done;
-				with Breakloop -> 
-					begin
-						c.(i) <- (List.nth !f !index).(0);
-						(List.nth !f !index).(1) <- (List.nth !f !index).(1) -1;
-						if (List.nth !f !index).(1) == 0 then f := (remove !f !index);
-					end;
-			done;
-			c;
-		end 
-		
+    	let s = ref 1 in
+    	for j=0 to (List.length !f -1) do
+    		s := !s * (factorial (List.nth !f j).(1))
+    	done;
+    	let grand_n = ref (factorial (Array.length c -1)) in
+    	for i=0 to (Array.length c -1) do
+    		let index = ref 0 in
+    		try
+    		while true do
+    			let step = ref ((!grand_n * (List.nth !f !index).(1)) / !s) in
+    			if !n <= !step then raise Breakloop;
+    			n := !n - !step;
+    			incr index
+    		done;
+    		with Breakloop ->
+    			begin
+    				s := !s / (List.nth !f	!index).(1);
+    				grand_n := max 1 (!grand_n / (Array.length c -1));
+    				c.(i) <- (List.nth !f !index).(0);
+    				(List.nth !f !index).(1) <- (List.nth !f !index).(1) -1;
+    				if (List.nth !f !index).(1) == 0 then f := (remove !f !index);
+    			end
+    	done;
+    	c
+		end
 
-(*module Repertory = Map.Make(String);;
-				
+(* Unranking *)
+
+let rec aux (l:component list) (l_original:component list) backup size index = match l with
+	|[] -> []
+	|hd::t -> 
+						let s = ref ["("] in 
+						 if number_of_recursions hd == 0 && number_of_nodes hd == size then ["()"]
+						 else if (number_of_recursions hd) != 0 && (number_of_nodes hd) <= size then
+						 	begin
+						 	  let partition = ref (Array.make ((number_of_recursions hd) +1) 0) in
+						 	  !partition.(0) <- size - number_of_nodes hd;
+						 	  let isModified = ref true in
+						 	  let f = frequencies !partition in 
+						 	  let factor = ref 1 in 
+						 	  let rec produit paire = match paire with
+						 		  |[] -> 1
+						 		  |hd::t -> (factorial hd.(1)) * produit t
+						 	  in factor := (factorial (Array.length !partition)) / (produit f);
+								let fin_parenthese = ref false in 
+						 	  while !isModified do
+						 		  let product = ref 1 in
+						 		  for i=0 to (Array.length !partition -1) do
+						 			  product := !product * backup.(!partition.(i));
+						 		  done;
+						 		  if !factor * !product -1 >= !index then
+						 		    begin
+						 		      let c = combination (!index / !product) !partition in
+						 		      index := !index mod !product;
+						 		      for i=0 to (Array.length c -1) do
+						 		      	product := !product / backup.(c.(i));
+												s := !s @ (aux l_original l_original backup c.(i) (ref(!index / !product)));
+						 		      	index := !index mod !product
+						 		      done;
+											isModified := false;
+											fin_parenthese := true
+						 		    end
+						 		  else
+						 		  	begin
+						 		  		index := !index - !factor * !product;
+						 		  		let a,b,c = next_partition_with_factor !partition in
+						 		  		isModified := a;
+						 		  		factor := b;
+						 		  		partition := c;
+						 		  	end
+						 	  done;
+								if !fin_parenthese then 
+									!s @ [")"]
+								else
+						 	  	(aux t l_original backup size index)
+						 	end
+						else
+							(aux t l_original backup size index);;
+
+
+
 let unranking size index rule = 
-	let backup = count(size, rule) in
-	let r = Repertory.empty in 
-		let rec aux size index = 
-			let s = ref ["("] in
-			let key = (string_of_int size) ^ "/" ^ (string_of_int index) in
-			if Repertory.mem key r then 
-				Repertory.find key r 
-			else
-				begin
-					
-				end 
+	let backup = count size rule in
+	String.concat "" (aux (get_comps_from_rule rule) (get_comps_from_rule rule) backup size (ref index))
 
-	
-*)	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	

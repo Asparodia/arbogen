@@ -1,4 +1,5 @@
 open Printf
+open Grammar
 
 type elem = Seq of string | Elem of string 
 type reference = string
@@ -22,27 +23,34 @@ let number_of_nodes (comp:component) =
 let rec factorial n = 
 	if n <= 1 then 1 
 	else n * (factorial (n-1))
-	
+
 let next_partition_with_factor base = 
 	let modification = ref false and
-	duplicate = ref 1 and
-	den = ref 1 in 
-		for i=0 to (Array.length base -2) do
-			if (not (!modification)) && base.(i)-1 >= base.(i+1) +1 then
-				begin
-					base.(i) <- base.(i)-1;
-					base.(i+1) <- base.(i+1)+1;
-					modification := true
-				end;
-			if base.(i) == base.(i+1) then 
-				begin
-					incr duplicate;
-					den := !den * !duplicate
-				end
-			else
-				duplicate := 1
-		done;
-	!modification, factorial (Array.length base) /(!den), base
+	index = ref 0 and
+	i = ref 1 in 
+	while !i < Array.length base && not !modification do
+		if base.(!index) - base.(!i) == 0 then index := !i
+		else if base.(!index) - base.(!i) >= 2 then
+			begin
+				base.(!index) <- base.(!index) - 1;
+				base.(!i) <- base.(!i) + 1;
+				modification := true
+			end;
+		incr i
+	done;
+	let duplicate = ref 1 and
+	factor = ref 1 in
+	for i=0 to (Array.length base -2) do
+		if base.(i) == base.(i+1) then 
+			begin
+				incr duplicate;
+				factor := !factor * !duplicate
+			end
+		else
+			duplicate := 1
+	done;
+	!modification, factorial (Array.length base) / !factor, base
+						
 			
 let read_file filename = 
 	let lines = ref [] in
@@ -114,13 +122,28 @@ let count n (r:rule) =
 			close_out fileWriter;
 			!backup
 		end
-		
+	
+(* Tests *)	
 
 (*					
 let r = "B", Cons(0, [])::Cons(1, [])::Cons(1, (Elem "B")::[])::Cons(1,(Elem "B")::(Elem "B")::[])::[];; 
 count 10 r;;
 *)
 
+(*
 let b = "B", Cons(0, [])::Cons(1,(Elem "B")::(Elem "B")::[])::[];;
-count 1000 b;;
+count 30 b;;
+*)
+
+(*
+let b1 = "B", Cons(0, [])::Cons(1,[])::Cons(2,(Elem "B"::[]))::Cons(1,(Elem "B")::(Elem "B")::[])::[];;
+count 30 b1;;
+*)
+
+
+
+
+
+
+
 		
