@@ -1,15 +1,6 @@
 open Printf
 open Grammar
 
-type elem = Seq of string | Elem of string 
-type reference = string
-
-type component =  Call of reference | Cons of int * elem list
-
-type rule = string * component list
-
-type grammar = rule list
-
 let number_of_recursions (comp:component) = 
 	match comp with
 		| Call(_) -> 0
@@ -51,7 +42,7 @@ let next_partition_with_factor base =
 	done;
 	!modification, factorial (Array.length base) / !factor, base
 						
-			
+(* Gestion de fichiers *)			
 let read_file filename = 
 	let lines = ref [] in
 	let chan = open_in filename in
@@ -62,7 +53,14 @@ let read_file filename =
 		with End_of_file ->
   	close_in chan;
 		!lines
-	
+	    
+let replace input output = 
+  Str.global_replace (Str.regexp_string input) output
+    
+let file_of_rule (rname,comps) =
+	replace "::" ""(replace ">" "-" (replace "<" "-"(replace ")" ""(replace "(" ""(replace ";" ".cnt" (replace " " "" (string_of_rule (rname,comps))))))))
+
+(* Count *)	
 let rec set_backup lines backup i = 
 	match lines with
 	| [] -> backup
@@ -98,9 +96,15 @@ let rec calcul_comp (l:component list) backup n bn = match l with
 				end;
 		calcul_comp t backup n bn
 	 
-let count n (r:rule) = 
-	let lines = read_file "backup.cnt" in 
-	let fileWriter = open_out_gen [Open_append] 744 "backup.cnt" in 
+let count n (r:rule) =
+	let filename = file_of_rule r in
+  if not (Sys.file_exists filename) then 
+    begin 
+      let create = open_out filename in 
+      close_out create
+    end;
+	let lines = read_file (file_of_rule r) in 
+	let fileWriter = open_out_gen [Open_append] 744 (file_of_rule r) in 
 	let nb_elements = ref (List.length lines) in
 	let backup = ref (Array.make (max (!nb_elements *2) 1000) 0) in
 		begin
@@ -135,10 +139,10 @@ let b = "B", Cons(0, [])::Cons(1,(Elem "B")::(Elem "B")::[])::[];;
 count 30 b;;
 *)
 
-(*
+
 let b1 = "B", Cons(0, [])::Cons(1,[])::Cons(2,(Elem "B"::[]))::Cons(1,(Elem "B")::(Elem "B")::[])::[];;
 count 30 b1;;
-*)
+
 
 
 

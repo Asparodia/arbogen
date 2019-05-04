@@ -1,4 +1,5 @@
 open Count
+open Grammar
 
 let rec remove l indice = match l with
 | [] -> []
@@ -107,4 +108,8 @@ let rec aux (l:component list) (l_original:component list) backup size index = m
 let unranking size index rule = 
 	let backup = count size rule in
 	String.concat "" (aux (get_comps_from_rule rule) (get_comps_from_rule rule) backup size (ref index))
+
+(* Test *)
+let b1 = "B", Cons(0, [])::Cons(1,[])::Cons(2,(Elem "B"::[]))::Cons(1,(Elem "B")::(Elem "B")::[])::[];;
+print_endline (unranking 10 60 Count.b1);;
 
