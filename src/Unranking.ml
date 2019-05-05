@@ -56,10 +56,10 @@ let rec aux (l:component list) (l_original:component list) backup size index = m
   |[] -> []
   |hd::t ->
     let s = ref ["("] in 
-    if number_of_recursions hd == 0 && number_of_nodes hd == size then ["()"]
+    if number_of_recursions hd == 0 && number_of_nodes hd == size then ["("^(string_of_int (number_of_nodes hd))^")"]
     else if (number_of_recursions hd) != 0 && (number_of_nodes hd) <= size then
       begin
-        let partition = ref (Array.make ((number_of_recursions hd) +1) 0) in
+        let partition = ref (Array.make ((number_of_recursions hd)) 0) in
         !partition.(0) <- size - number_of_nodes hd;
         let isModified = ref true in
         let f = frequencies !partition in 
@@ -78,10 +78,11 @@ let rec aux (l:component list) (l_original:component list) backup size index = m
             begin
               let c = combination (!index / !product) !partition in
               index := !index mod !product;
+              s := !s @ [string_of_int (number_of_nodes hd)];
               for i=0 to (Array.length c -1) do
                 product := !product / backup.(c.(i));
                 s := !s @ (aux l_original l_original backup c.(i) (ref(!index / !product)));
-                index := !index mod !product
+                index := !index mod !product;
                 done;
               isModified := false;
               fin_parenthese := true
@@ -110,6 +111,52 @@ let unranking size index rule =
   String.concat "" (aux (get_comps_from_rule rule) (get_comps_from_rule rule) backup size (ref index))
 
 (* Test *)
+
+(*
+let r = "B", Cons(0, [])::Cons(1, [])::Cons(1, (Elem "B")::[])::Cons(1,(Elem "B")::(Elem "B")::[])::[];; 
+print_endline (unranking 5 3 r);;
+*) 
+
+(*
+let b = "B", Cons(0, [])::Cons(1,(Elem "B")::(Elem "B")::[])::[];;
+print_endline (unranking 20 120 r);;
+*)
+
+(*
 let b1 = "B", Cons(0, [])::Cons(1,[])::Cons(2,(Elem "B"::[]))::Cons(1,(Elem "B")::(Elem "B")::[])::[];;
-print_endline (unranking 10 60 Count.b1);;
+print_endline (unranking 10 60 b1);;
+*)
+
+let b2 = "B", Cons(0, [])::Cons(1,[])::Cons(1,(Elem "B")::(Elem "B")::[])::Cons(2,(Elem "B")::(Elem "B")::(Elem "B")::[])::Cons(3,(Elem "B")::(Elem "B")::(Elem "B")::(Elem "B")::[])::[];;
+print_endline (unranking 4 0 b2);;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

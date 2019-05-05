@@ -58,7 +58,7 @@ let replace input output =
   Str.global_replace (Str.regexp_string input) output
     
 let file_of_rule (rname,comps) =
-  replace "::" ""(replace ">" "-" (replace "<" "-"(replace ")" ""(replace "(" ""(replace ";" ".cnt" (replace " " "" (string_of_rule (rname,comps))))))))
+  replace "*" ""(replace "Elem" "El"(replace "Cons" "Cs"(replace "::" ""(replace ">" "-" (replace "<" "-"(replace ")" ""(replace "(" ""(replace ";" ".cnt" (replace " " "" (string_of_rule (rname,comps)))))))))))
 
 (* Count *)  
 let rec set_backup lines backup i = 
@@ -139,6 +139,27 @@ let b = "B", Cons(0, [])::Cons(1,(Elem "B")::(Elem "B")::[])::[];;
 count 30 b;;
 *)
 
-
+(*
 let b1 = "B", Cons(0, [])::Cons(1,[])::Cons(2,(Elem "B"::[]))::Cons(1,(Elem "B")::(Elem "B")::[])::[];;
 count 30 b1;;
+*)
+
+
+let b2 = "B", Cons(0, [])::Cons(1,[])::Cons(1,(Elem "B")::(Elem "B")::[])::Cons(2,(Elem "B")::(Elem "B")::(Elem "B")::[])::Cons(3,(Elem "B")::(Elem "B")::(Elem "B")::(Elem "B")::[])::[];;
+count 30 b2;;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
