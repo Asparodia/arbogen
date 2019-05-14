@@ -56,7 +56,10 @@ let rec aux (l:component list) (l_original:component list) backup size index = m
   |[] -> []
   |hd::t ->
     let s = ref ["("] in 
-    if number_of_recursions hd == 0 && number_of_nodes hd == size then ["("^(string_of_int (number_of_nodes hd))^")"]
+    if number_of_recursions hd == 0 && number_of_nodes hd == size && !index == 0 then 
+      ["("^(string_of_int (number_of_nodes hd))^")"]
+    else if number_of_recursions hd == 0 && number_of_nodes hd == size && backup.(size) > 0 then 
+      (aux t l_original backup size (ref (!index-1)))
     else if (number_of_recursions hd) != 0 && (number_of_nodes hd) <= size then
       begin
         let partition = ref (Array.make ((number_of_recursions hd)) 0) in
@@ -102,7 +105,8 @@ let rec aux (l:component list) (l_original:component list) backup size index = m
           (aux t l_original backup size index)
       end
     else
-      (aux t l_original backup size index);;
+      (aux t l_original backup size index)
+
 
 
 
@@ -129,6 +133,9 @@ print_endline (unranking 10 60 b1);;
 
 let b2 = "B", Cons(0, [])::Cons(1,[])::Cons(1,(Elem "B")::(Elem "B")::[])::Cons(2,(Elem "B")::(Elem "B")::(Elem "B")::[])::Cons(3,(Elem "B")::(Elem "B")::(Elem "B")::(Elem "B")::[])::[];;
 print_endline (unranking 4 0 b2);;
+
+for i=0 to 99 do print_endline(unranking 10 i b2) done;;
+
 
 
 
