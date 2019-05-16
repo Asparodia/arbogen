@@ -60,11 +60,12 @@ let replace input output =
 let file_of_rule (rname,comps) =
   replace "*" ""(replace "Elem" "El"(replace "Cons" "Cs"(replace "::" ""(replace ">" "-" (replace "<" "-"(replace ")" ""(replace "(" ""(replace ";" ".cnt" (replace " " "" (string_of_rule (rname,comps)))))))))))
 
+
 (* Count *)  
 let rec set_backup lines backup i = 
   match lines with
   | [] -> backup
-  | hd::t -> backup.(i) <- (int_of_string hd); set_backup t backup (i+1)
+  | hd::t -> backup.(i) <- (Z.of_string hd); set_backup t backup (i+1)
 
 let get_comps_from_rule (r:rule) = 
   match r with
@@ -74,7 +75,7 @@ let rec calcul_comp (l:component list) backup n bn = match l with
   | [] -> !bn
   | hd::t -> 
     if n - number_of_nodes hd >= 0 then
-      if number_of_recursions hd == 0 && number_of_nodes hd == n then incr bn
+      if number_of_recursions hd == 0 && number_of_nodes hd == n then bn := Z.succ !bn
       else 
         begin
           let base = ref (Array.make (max 1 (number_of_recursions hd)) 0) in
@@ -83,11 +84,11 @@ let rec calcul_comp (l:component list) backup n bn = match l with
           let factor = ref 1 in 
           if number_of_nodes hd != n then factor := number_of_recursions hd;
           while !modification do
-            let product = ref 1 in
+            let product = ref Z.one in
             for i=0 to (Array.length !base -1) do
-              product := !product * backup.(!base.(i))
+              product := Z.mul !product backup.(!base.(i))
             done;
-            bn := !bn + !product * !factor;
+            bn := Z.add !bn (Z.mul !product (Z.of_int !factor));
             let a, b, c = next_partition_with_factor !base in
             modification := a;
             factor := b;
@@ -106,22 +107,23 @@ let count n (r:rule) =
   let lines = read_file (file_of_rule r) in 
   let fileWriter = open_out_gen [Open_append] 744 (file_of_rule r) in 
   let nb_elements = ref (List.length lines) in
-  let backup = ref (Array.make (max (!nb_elements *2) 1000) 0) in
+  let backup = ref (Array.make (max (!nb_elements *2) 1000) Z.zero) in
     begin
-      backup := set_backup lines !backup 0; 
+      backup := set_backup lines !backup 0;
       for i=(!nb_elements) to n do
-        let bn = calcul_comp (get_comps_from_rule r) !backup i (ref 0) in
+        let bn = calcul_comp (get_comps_from_rule r) !backup i (ref Z.zero) in
         if Array.length !backup == !nb_elements then
           begin
-            let backup_increased = Array.make (!nb_elements * 2) 0 in
+            let backup_increased = Array.make (!nb_elements * 2) Z.zero in
             for j=0 to (!nb_elements-1) do
               backup_increased.(j) <- !backup.(j)
             done;
             backup := backup_increased
           end;
         !backup.(!nb_elements) <- bn;
+        Format.printf "%a\n" Z.pp_print bn;
         incr nb_elements;
-        fprintf fileWriter "%s\n" (string_of_int bn)
+        fprintf fileWriter "%s\n" (Z.to_string bn)
       done;
       close_out fileWriter;
       !backup
@@ -146,7 +148,7 @@ count 30 b1;;
 
 
 let b2 = "B", Cons(0, [])::Cons(1,[])::Cons(1,(Elem "B")::(Elem "B")::[])::Cons(2,(Elem "B")::(Elem "B")::(Elem "B")::[])::Cons(3,(Elem "B")::(Elem "B")::(Elem "B")::(Elem "B")::[])::[];;
-count 30 b2;;
+count 300 b2;;
 
 
 

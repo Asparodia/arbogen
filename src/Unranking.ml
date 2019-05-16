@@ -18,7 +18,7 @@ let frequencies p =
 exception Breakloop;;
 
 let combination m p = 
-  let n = ref (m +1) in 
+  let n = ref (Z.succ m) in 
   let f = ref (frequencies p) in
   let c = Array.copy p in
   if (Array.length p) == 1 then p 
@@ -34,8 +34,8 @@ let combination m p =
         try
         while true do
           let step = ref ((!grand_n * (List.nth !f !index).(1)) / !s) in
-          if !n <= !step then raise Breakloop;
-          n := !n - !step;
+          if !n <= Z.of_int !step then raise Breakloop;
+          n := Z.sub !n (Z.of_int !step);
           incr index
         done;
         with Breakloop ->
@@ -53,13 +53,15 @@ let combination m p =
 (* Unranking *)
 
 let rec aux (l:component list) (l_original:component list) backup size index = match l with
-  |[] -> []
+  |[] -> (*[]*)Node("","",[])
   |hd::t ->
-    let s = ref ["("] in 
-    if number_of_recursions hd == 0 && number_of_nodes hd == size && !index == 0 then 
-      ["("^(string_of_int (number_of_nodes hd))^")"]
-    else if number_of_recursions hd == 0 && number_of_nodes hd == size && backup.(size) > 0 then 
-      (aux t l_original backup size (ref (!index-1)))
+    (*let s = ref ["("] in *)
+    let s = ref [] in
+    if number_of_recursions hd == 0 && number_of_nodes hd == size && !index == Z.zero then 
+      (*["("^(string_of_int (number_of_nodes hd))^")"]*)
+      Leaf("","")
+    else if number_of_recursions hd == 0 && number_of_nodes hd == size && backup.(size) > Z.zero then 
+      (aux t l_original backup size (ref (Z.pred !index)))
     else if (number_of_recursions hd) != 0 && (number_of_nodes hd) <= size then
       begin
         let partition = ref (Array.make ((number_of_recursions hd)) 0) in
@@ -73,26 +75,27 @@ let rec aux (l:component list) (l_original:component list) backup size index = m
           in factor := (factorial (Array.length !partition)) / (produit f);
         let fin_parenthese = ref false in
         while !isModified do
-          let product = ref 1 in
+          let product = ref Z.one in
           for i=0 to (Array.length !partition -1) do
-            product := !product * backup.(!partition.(i));
+            product := Z.mul !product backup.(!partition.(i));
           done;
-          if !factor * !product -1 >= !index then
+          if (Z.mul (Z.of_int !factor) !product) >= (Z.succ !index) then
             begin
-              let c = combination (!index / !product) !partition in
-              index := !index mod !product;
-              s := !s @ [string_of_int (number_of_nodes hd)];
+              let c = combination (Z.div !index !product) !partition in
+              index := Z.erem !index !product;
+             (* s := !s @ [string_of_int (number_of_nodes hd)];*)
               for i=0 to (Array.length c -1) do
-                product := !product / backup.(c.(i));
-                s := !s @ (aux l_original l_original backup c.(i) (ref(!index / !product)));
-                index := !index mod !product;
+                product := Z.div !product backup.(c.(i));
+                (*s := !s @ (aux l_original l_original backup c.(i) (ref(Z.div !index !product)));*)
+                s := !s @ [ref(aux l_original l_original backup c.(i) (ref(Z.div !index !product)))];
+                index := Z.erem !index !product;
                 done;
               isModified := false;
               fin_parenthese := true
               end
           else
             begin
-              index := !index - !factor * !product;
+              index := Z.sub !index (Z.mul (Z.of_int !factor) !product);
                let a,b,c = next_partition_with_factor !partition in
                isModified := a;
                factor := b;
@@ -100,7 +103,8 @@ let rec aux (l:component list) (l_original:component list) backup size index = m
             end
         done;
         if !fin_parenthese then 
-          !s @ [")"]
+          (*!s @ [")"]*)
+          Node("","",!s)
         else
           (aux t l_original backup size index)
       end
@@ -109,10 +113,16 @@ let rec aux (l:component list) (l_original:component list) backup size index = m
 
 
 
-
+(*
 let unranking size index rule = 
   let backup = count size rule in
   String.concat "" (aux (get_comps_from_rule rule) (get_comps_from_rule rule) backup size (ref index))
+*)
+
+let unranking size index rule = 
+  let backup = count size rule in
+  aux (get_comps_from_rule rule) (get_comps_from_rule rule) backup size (ref index)
+
 
 (* Test *)
 
@@ -131,12 +141,12 @@ let b1 = "B", Cons(0, [])::Cons(1,[])::Cons(2,(Elem "B"::[]))::Cons(1,(Elem "B")
 print_endline (unranking 10 60 b1);;
 *)
 
+(*
 let b2 = "B", Cons(0, [])::Cons(1,[])::Cons(1,(Elem "B")::(Elem "B")::[])::Cons(2,(Elem "B")::(Elem "B")::(Elem "B")::[])::Cons(3,(Elem "B")::(Elem "B")::(Elem "B")::(Elem "B")::[])::[];;
 print_endline (unranking 4 0 b2);;
 
 for i=0 to 99 do print_endline(unranking 10 i b2) done;;
-
-
+*)
 
 
 
