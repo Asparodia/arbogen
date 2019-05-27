@@ -128,24 +128,23 @@ let unranking size index rule =
 
 (*
 let r = "B", Cons(0, [])::Cons(1, [])::Cons(1, (Elem "B")::[])::Cons(1,(Elem "B")::(Elem "B")::[])::[];; 
-print_endline (unranking 5 3 r);;
+let a_r = unranking 5 (Z.of_int 3) r;;
 *) 
 
 (*
 let b = "B", Cons(0, [])::Cons(1,(Elem "B")::(Elem "B")::[])::[];;
-print_endline (unranking 20 120 r);;
+let a_b = unranking 20 (Z.of_int 120) r;;
 *)
 
 (*
 let b1 = "B", Cons(0, [])::Cons(1,[])::Cons(2,(Elem "B"::[]))::Cons(1,(Elem "B")::(Elem "B")::[])::[];;
-print_endline (unranking 10 60 b1);;
+let a_b1 = unranking 10 (Z.of_int 60) b1;;
 *)
 
 (*
 let b2 = "B", Cons(0, [])::Cons(1,[])::Cons(1,(Elem "B")::(Elem "B")::[])::Cons(2,(Elem "B")::(Elem "B")::(Elem "B")::[])::Cons(3,(Elem "B")::(Elem "B")::(Elem "B")::(Elem "B")::[])::[];;
-print_endline (unranking 4 0 b2);;
+let a_b2 = unranking 4 (Z.of_int 0) b2;;
 
-for i=0 to 99 do print_endline(unranking 10 i b2) done;;
 *)
 
 
